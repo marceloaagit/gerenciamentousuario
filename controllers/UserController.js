@@ -9,8 +9,33 @@ class UserController{
     onSubmit() {
         this.formE1.addEventListener("submit", event => {
             event.preventDefault();
-            this.addLine(this.getValues());
+            let values = this.getValues();
+
+            this.getPhoto((content) => { 
+                values.photo = content;
+                this.addLine(values);
+            });
+
         });
+    }
+
+    getPhoto(callback) {
+
+        let fileReader = new FileReader();
+
+        let elements = [...this.formE1.elements].filter(item => {
+            if(item.name === "photo"){
+                return item;
+            }
+        });
+
+        let file = elements[0].files[0];
+
+        fileReader.onload = () => {
+            callback(fileReader.result);
+        };
+
+        fileReader.readAsDataURL(file);
     }
 
     getValues() {
@@ -34,7 +59,7 @@ class UserController{
 
         this.tableE1.innerHTML = `
         <tr>
-            <td><img src="dist/img/user1-128x128.jpg" alt="User Image" class="img-circle img-sm"></td>
+            <td><img src="${dataUser.photo}" alt="User Image" class="img-circle img-sm"></td>
             <td>${dataUser.name}</td>
             <td>${dataUser.email}</td>
             <td>${dataUser.admin}</td>
