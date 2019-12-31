@@ -11,31 +11,47 @@ class UserController{
             event.preventDefault();
             let values = this.getValues();
 
-            this.getPhoto((content) => { 
-                values.photo = content;
-                this.addLine(values);
-            });
+            this.getPhoto().then(
+                content => {
+                    values.photo = content;
+                    this.addLine(values);
+                }, 
+            
+                e => {
+                    console.log(e);
+                });
 
         });
     }
 
-    getPhoto(callback) {
+    getPhoto() {
 
-        let fileReader = new FileReader();
+        return new Promise((resolve, reject) => {
 
-        let elements = [...this.formE1.elements].filter(item => {
-            if(item.name === "photo"){
-                return item;
-            }
+            let fileReader = new FileReader();
+    
+            let elements = [...this.formE1.elements].filter(item => {
+                if(item.name === "photo"){
+                    return item;
+                }
+            });
+    
+            let file = elements[0].files[0];
+    
+            fileReader.onload = () => {
+                resolve(fileReader.result);
+            };
+
+            fileReader.onerror = (e) => {
+                reject(e);
+            };
+    
+            fileReader.readAsDataURL(file);
+
         });
 
-        let file = elements[0].files[0];
+        
 
-        fileReader.onload = () => {
-            callback(fileReader.result);
-        };
-
-        fileReader.readAsDataURL(file);
     }
 
     getValues() {
