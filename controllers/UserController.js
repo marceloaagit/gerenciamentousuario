@@ -1,15 +1,43 @@
 class UserController{
 
-    constructor(formId, tableId) {
-        this.formE1 = document.getElementById(formId);
+    constructor(formIdCreate, formIdUpdate, tableId) {
+
+        this.formE1 = document.getElementById(formIdCreate);
+        this.formUpdateE1 = document.getElementById(formIdUpdate);
         this.tableE1 = document.getElementById(tableId);
+
         this.onSubmit();
-        this.onEditCancel();
+        this.onEdit();
     }
 
-    onEditCancel(){
+    onEdit(){
         document.querySelector('#box-user-update .btn-cancel').addEventListener('click', e => {
             this.showPanelCreate();
+        });
+
+        this.formUpdateE1.addEventListener('submit', e => {
+            event.preventDefault();
+            let btn = this.formUpdateE1.querySelector('[type=submit]');
+            btn.disabled = true;
+            let values = this.getValues(this.formUpdateE1);
+            let index = this.formUpdateE1.dataset.trIndex;
+            let tr  = this.tableE1.rows[index];
+            tr.dataset.user = JSON.stringify(values);
+
+            tr.innerHTML = `
+                <td><img src="${values.photo}" alt="User Image" class="img-circle img-sm"></td>
+                <td>${values.name}</td>
+                <td>${values.email}</td>
+                <td>${(values.admin) ? 'Sim': 'Não'}</td>
+                <td>${Utils.dateFormat(values.register)}</td>
+                <td>
+                    <button type="button" class="btn btn-primary btn-edit btn-xs btn-flat">Editar</button>
+                    <button type="button" class="btn btn-danger btn-xs btn-flat">Excluir</button>
+                </td>`;
+
+                this.tableE1.appendChild(tr);
+                this.updateCount();
+
         });
     }
 
@@ -22,7 +50,7 @@ class UserController{
             
             btn.disabled = true;
             
-            let values = this.getValues();
+            let values = this.getValues(this.formE1);
 
             if(!values) return false;
 
@@ -75,12 +103,12 @@ class UserController{
 
     }
 
-    getValues() {
+    getValues(formE1) {
 
         let user = {};
         let isValid = true;
 
-        [...this.formE1.elements].forEach(field => { 
+        [...formE1.elements].forEach(field => { 
 
             if(['name', 'email', 'password'].indexOf(field.name) > -1 && !field.value){
                 field.parentElement.classList.add('has-error');
@@ -125,51 +153,57 @@ class UserController{
                 <button type="button" class="btn btn-danger btn-xs btn-flat">Excluir</button>
             </td>`;
 
-            tr.querySelector('.btn-edit').addEventListener('click', e => {
-                
-                let json = JSON.parse(tr.dataset.user);
-
-                let form = document.querySelector('#form-user-update');
-
-                for(let name in json){
-                    
-                    let field = form.querySelector('[name='+ name.replace('_', '') + ']');
-                    
-                    
-                    if(field){
-
-                        switch (field.type) {
-
-                            case 'file':
-                                continue;
-                                break;
-
-                            case 'radio':
-                                field = form.querySelector('[name='+ name.replace('_', '') + '][value=' + json[name] + ']');
-                                field.checked = true;
-                                break;
-
-                            case 'checkbox':
-                                field.checked = json[name];
-                                break;
-
-                            default:
-                                field.value = json[name];
-
-                        }
-                        
-                        field.value = json[name];
-
-                    }
-                }
-
-                this.showPanelUpdate();
-
-            });
+            this.addEventsTR(tr);
 
             this.tableE1.appendChild(tr);
 
             this.updateCount();
+    }
+
+    addEventsTR(tr) {
+        tr.querySelector('.btn-edit').addEventListener('click', e => {
+                
+            let json = JSON.parse(tr.dataset.user);
+
+            let form = document.querySelector('#form-user-update');
+
+            form.dataset.trIndex = tr.sectionRowIndex;
+
+            for(let name in json){
+                
+                let field = form.querySelector('[name='+ name.replace('_', '') + ']');
+                
+                
+                if(field){
+
+                    switch (field.type) {
+
+                        case 'file':
+                            continue;
+                            break;
+
+                        case 'radio':
+                            field = form.querySelector('[name='+ name.replace('_', '') + '][value=' + json[name] + ']');
+                            field.checked = true;
+                            break;
+
+                        case 'checkbox':
+                            field.checked = json[name];
+                            break;
+
+                        default:
+                            field.value = json[name];
+
+                    }
+                    
+                    field.value = json[name];
+
+                }
+            }
+
+            this.showPanelUpdate();
+
+        });
     }
 
     updateCount(){
