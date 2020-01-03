@@ -8,6 +8,7 @@ class UserController{
 
         this.onSubmit();
         this.onEdit();
+        this.selectAll();
     }
 
     onEdit(){
@@ -36,20 +37,13 @@ class UserController{
                             result._photo = content;
                         }
 
-                        tr.dataset.user = JSON.stringify(result);
+                        let user = new User();
 
-                        tr.innerHTML = `
-                            <td><img src="${result._photo}" alt="User Image" class="img-circle img-sm"></td>
-                            <td>${result._name}</td>
-                            <td>${result._email}</td>
-                            <td>${(result._admin) ? 'Sim': 'Não'}</td>
-                            <td>${Utils.dateFormat(result._register)}</td>
-                            <td>
-                                <button type="button" class="btn btn-primary btn-edit btn-xs btn-flat">Editar</button>
-                                <button type="button" class="btn btn-danger btn-xs btn-flat">Excluir</button>
-                            </td>`;
+                        user.loadFromJSON(result);    
+                        
+                        user.save();
 
-                        this.addEventsTR(tr);
+                        this.getTr(user, tr);                        
 
                         this.updateCount();
 
@@ -83,6 +77,7 @@ class UserController{
             this.getPhoto(this.formE1).then(
                 content => {
                     values.photo = content;
+                    values.save();
                     this.addLine(values);
                     this.formE1.reset();
                     btn.disabled = false;
@@ -162,34 +157,60 @@ class UserController{
     
     }
 
+    
+
+    selectAll(){
+        let users = User.getUsersStorage();
+        users.forEach(dataUser => {
+
+            let user = new User();
+            user.loadFromJSON(dataUser);
+            this.addLine(user);
+        });
+    }
+
+
+    
+
     addLine(dataUser) {
 
-        let tr = document.createElement('tr');
+        let tr = this.getTr(dataUser);
 
-        tr.dataset.user = JSON.stringify(dataUser);
+        this.tableE1.appendChild(tr);
 
-        tr.innerHTML = `
-            <td><img src="${dataUser.photo}" alt="User Image" class="img-circle img-sm"></td>
-            <td>${dataUser.name}</td>
-            <td>${dataUser.email}</td>
-            <td>${(dataUser.admin) ? 'Sim': 'Não'}</td>
-            <td>${Utils.dateFormat(dataUser.register)}</td>
-            <td>
-                <button type="button" class="btn btn-primary btn-edit btn-xs btn-flat">Editar</button>
-                <button type="button" class="btn btn-danger btn-delete btn-xs btn-flat">Excluir</button>
-            </td>`;
+        this.updateCount();
+    }
 
-            this.addEventsTR(tr);
+    getTr(dataUser, tr = null){
+    
+    if(tr === null) tr = document.createElement('tr');
 
-            this.tableE1.appendChild(tr);
+    tr.dataset.user = JSON.stringify(dataUser);
+    
+    tr.innerHTML = `
+        <td><img src="${dataUser.photo}" alt="User Image" class="img-circle img-sm"></td>
+        <td>${dataUser.name}</td>
+        <td>${dataUser.email}</td>
+        <td>${(dataUser.admin) ? 'Sim': 'Não'}</td>
+        <td>${Utils.dateFormat(dataUser.register)}</td>
+        <td>
+            <button type="button" class="btn btn-primary btn-edit btn-xs btn-flat">Editar</button>
+            <button type="button" class="btn btn-danger btn-delete btn-xs btn-flat">Excluir</button>
+        </td>`;      
 
-            this.updateCount();
+        this.addEventsTR(tr);   
+        
+        return tr;
+
     }
 
     addEventsTR(tr) {
 
         tr.querySelector('.btn-delete').addEventListener('click', e => {
-            if(confirm('Deseja realmente excluir?')){
+            if(confirm('Deseja realmente excluir?')) {
+                let user = new User();
+                user.loadFromJSON(JSON.parse(tr.dataset.user));
+                user.remove();
                 tr.remove();
                 this.updateCount();
             }
